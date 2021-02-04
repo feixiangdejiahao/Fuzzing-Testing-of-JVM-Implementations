@@ -88,7 +88,7 @@ public class Main {
         return c;
     }
 
-    public static void injectPathCount(UnitPatchingChain units,String signature) {//将每一行代码后加入LOG_PREVIOUS
+    public static void injectPathCount(UnitPatchingChain units,String signature) {//对每行原始代码进行修改，添加所在方法的signature，并且打上标记log_previous
         List<Stmt> targetStatements = new ArrayList<Stmt>();
         Iterator<Unit> iterator = units.snapshotIterator();
         while (iterator.hasNext()) {
@@ -321,18 +321,41 @@ public class Main {
         return result;
     }
 
-//    public static List<Stmt> getActiveInstructions(Set<String> usedStmt, SootClass c, String signature, String[] args) throws IOException {
-//        List<Stmt> activeJimpleInstructions = new ArrayList<Stmt>();
-//        List<SootMethod> d = c.getMethods();
-//        SootMethod mainMethod = null;
-//        for (SootMethod method : d) {
-//            String currentSignature = method.getSignature();
-//            if (currentSignature.contains(signature)) {
-//                mainMethod = method;
-//                break;
-//            }
-//        }
-//
-//    }
+    public static List<Stmt> getActiveInstructions(Set<String> usedStmt, SootClass c, String signature, String[] args) throws IOException {
+        Map<String, String> mapping = new HashMap<>();
+        List<Stmt> activeJimpleInstructions = new ArrayList<Stmt>();
+        List<SootMethod> d = c.getMethods();
+        SootMethod mainMethod = null;
+        for (SootMethod method : d) {       //标记当前signature对应的method
+            String currentSignature = method.getSignature();
+            if (currentSignature.contains(signature)) {
+                mainMethod = method;
+                break;
+            }
+        }
+        if (mainMethod == null) {
+            return null;
+        }
+        Body body = mainMethod.retrieveActiveBody();
+        UnitPatchingChain units = body.getUnits();
+        Iterator<Unit> iter = units.snapshotIterator();
+        while (iter.hasNext()) {
+            Stmt current = (Stmt) iter.next();
+            if (current.toString().contains(LOG_PREVIOUS)) { // because soot will rename variable
+                String[] elements = current.toString().split("[*]+");
+//                System.out.println(Arrays.toString(elements));
+                String currentStmt = elements[3].trim().replace("\\", "");  // 去除转义符
+                System.out.println(currentStmt);
+                currentStmt = currentStmt.substring(0, currentStmt.length() - 2);//去除末尾的右引号和反括号
+                if (usedStmt.contains(currentStmt)) {
+                    Stmt previous = (Stmt) (units.getPredOf(current));
+                    mapping.put(previous.toString(), currentStmt);
+                    activeJimpleInstructions.add(previous);
+                }
+            }
+        }
+        UsedStatementHelper.addMethodStringToStmt(signature, mapping);
+        return activeJimpleInstructions;
+    }
 }
 

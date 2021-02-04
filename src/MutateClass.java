@@ -32,7 +32,10 @@ public class MutateClass {
     }
 
     private void initializeSootClass(List<MethodCounter> previousMutationCounter) throws IOException{
-        Main.outputClassFile(this.sootClass);
+        Set<String> classPureInstructionFlowSet= new HashSet<>();
+
+
+        Main.outputClassFile(this.sootClass);//生成插装后的class文件
         for (SootMethod method : this.sootClass.getMethods()) {//将method村放入hashmap中,由signature进行索引
             this.methodLiveBody.put(method.getSignature(), method.retrieveActiveBody());
         }
@@ -40,7 +43,6 @@ public class MutateClass {
         //System.out.println(this.classPureInstructionFlow);
         Debug.debug(this, classPureInstructionFlow);
         //this.mainLiveStmt = Main.getExecutedLiveInstructions(className, Main.MAIN_SIGN, activeArgs, jvmOptions);//找main方法下的livecode
-        Set<String> classPureInstructionFlowSet= new HashSet<>();
         for(String s: classPureInstructionFlow){
             String[] elements = s.split("[*]+");
             String currentStmt = elements[3].trim();
@@ -52,7 +54,8 @@ public class MutateClass {
             methodOriginalStmtList.put(method.getSignature(), Main.getAllStatementsList(method));
             methodMap.put(method.getSignature(), method);
             Set<String> usedStmt = Main.getExecutedLiveInstructions(className, method.getSignature(), activeArgs, jvmOptions);
-//            List<Stmt> liveStmt = Main.getActiveInstructions(usedStmt, this.sootClass, method.getSignature(), activeArgs);
+            List<Stmt> liveStmt = Main.getActiveInstructions(usedStmt, this.sootClass, method.getSignature(), activeArgs);
         }
+
     }
 }
