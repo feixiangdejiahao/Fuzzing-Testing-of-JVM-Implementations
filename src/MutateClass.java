@@ -1,6 +1,6 @@
 import soot.*;
 import soot.jimple.*;
-import soot.jimple.internal.JIfStmt;
+import soot.jimple.internal.JGotoStmt;
 import soot.jimple.internal.JLookupSwitchStmt;
 import soot.jimple.internal.JReturnStmt;
 import soot.options.Options;
@@ -434,7 +434,7 @@ public class MutateClass {
             if(stmtString.contains("return")){
                 // the return stmt can be "if i1 != 0 goto return 0"
                 if(stmtString.contains("goto")){
-                    JIfStmt ifReturnStmt = (JIfStmt)originStmt.get(i);
+                    JGotoStmt ifReturnStmt = (JGotoStmt)originStmt.get(i);
                     Stmt returnStmt = (Stmt)ifReturnStmt.getTargetBox().getUnit();
                     foundReturnStmt.add(returnStmt);
                 }else{
