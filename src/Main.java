@@ -69,7 +69,7 @@ public class Main {
         SootClass c = Scene.v().forceResolve("Print", SootClass.BODIES);
         List<SootMethod> d = c.getMethods();
         for (SootMethod method : d) {
-            method.retrieveActiveBody();//这一部分还需要修改，存在一些问题
+            method.retrieveActiveBody();
         }
     }
 
@@ -298,7 +298,7 @@ public class Main {
                 }
             }
         }
-        for (SootMethod method : methods) {
+        for (SootMethod method : methods) {//调用的方法哪些是在sootmethod中,将其添加到signatures
             if (involvedMethod.contains(method.getSignature()) || method.getSignature().contains(MAIN_SIGN)) {
                 signatures.add(method);
             }
@@ -322,7 +322,7 @@ public class Main {
     }
 
     public static List<Stmt> getActiveInstructions(Set<String> usedStmt, SootClass c, String signature, String[] args) throws IOException {
-        Map<String, String> mapping = new HashMap<>();
+        Map<String, String> mapping = new HashMap<>();//可以用被soot修改后的stmt找到对应的修改前的stmt
         List<Stmt> activeJimpleInstructions = new ArrayList<Stmt>();
         List<SootMethod> d = c.getMethods();
         SootMethod mainMethod = null;
@@ -341,21 +341,44 @@ public class Main {
         Iterator<Unit> iter = units.snapshotIterator();
         while (iter.hasNext()) {
             Stmt current = (Stmt) iter.next();
-            if (current.toString().contains(LOG_PREVIOUS)) { // because soot will rename variable
+            if (current.toString().contains(LOG_PREVIOUS)) {
                 String[] elements = current.toString().split("[*]+");
 //                System.out.println(Arrays.toString(elements));
                 String currentStmt = elements[3].trim().replace("\\", "");  // 去除转义符
-                System.out.println(currentStmt);
+//                System.out.println(currentStmt);
                 currentStmt = currentStmt.substring(0, currentStmt.length() - 2);//去除末尾的右引号和反括号
-                if (usedStmt.contains(currentStmt)) {
+                if (usedStmt.contains(currentStmt)) {                            //soot在插装后会改变jimple文件中的变量名,eg:i0 = lengthof r0 -> i1 = lengthof r0
                     Stmt previous = (Stmt) (units.getPredOf(current));
+//                    System.out.println(current.toString());
+//                    System.out.println(currentStmt);
+//                    System.out.println(previous.toString());
+//                    System.out.println();
                     mapping.put(previous.toString(), currentStmt);
-                    activeJimpleInstructions.add(previous);
+                    activeJimpleInstructions.add(previous);//将目前的jimple源代码（即不含log_previous的代码）存入
                 }
             }
         }
         UsedStatementHelper.addMethodStringToStmt(signature, mapping);
         return activeJimpleInstructions;
     }
+
+    public static String temporaryOutput(SootClass sClass, String tmpRoot, String tmpName) {
+        try {
+            String fileName = tmpRoot + "/" + tmpName + sClass.getName()+".class";
+            OutputStream streamOut = new JasminOutputStream(new FileOutputStream(fileName));
+            PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
+            JasminClass jasminClass = new soot.jimple.JasminClass(sClass);
+            jasminClass.print(writerOut);
+            writerOut.flush();
+            streamOut.close();
+            return fileName;
+        } catch (Exception e) {
+//            e.printStackTrace();
+            System.out.println("should not");
+            return null;
+        }
+    }
+
+
 }
 
