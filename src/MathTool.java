@@ -18,4 +18,6 @@ public class MathTool {
     public static double realLog(double value, double base) {//用换底公式计算对base求value的底
         return Math.log(value) / Math.log(base);
     }
+
+
 }

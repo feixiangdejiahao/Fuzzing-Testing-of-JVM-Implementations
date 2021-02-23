@@ -1,4 +1,4 @@
-public class MethodCounter implements Comparable {//用于进行方法比较
+public class MethodCounter implements Comparable {//用于进行方法排序
     private String signature;
     private Integer count;
 

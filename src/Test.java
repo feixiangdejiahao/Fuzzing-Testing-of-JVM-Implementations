@@ -1,9 +1,16 @@
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 public class Test{
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         int i = 1;
         Person camel = new Person("jiahaoxiang");
         camel.setName("jiahaoxiang");
+        OutputStream file = new FileOutputStream("./tmp/1612946172994.org.sunflow.Benchmark.class ");
         System.out.println(camel.getName());
+        file.close();
         //System.out.println(System.getProperty("java.class.path"));
     }
 

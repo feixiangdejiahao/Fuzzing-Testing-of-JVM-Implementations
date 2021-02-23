@@ -124,7 +124,10 @@ public class Main {
 
     public static void outputClassFile(SootClass sClass) throws IOException {
         String fileName = SourceLocator.v().getFileNameFor(sClass, Options.output_format_class);
+//        System.out.println(fileName);
         fileName = fileName.replace("sootOutput"+File.separator, Main.getGenerated());//替换为各个benchmark文件夹下的路径
+//        System.out.println(fileName);
+//        System.exit(0);
         File file = new File(fileName);
         String path = file.getParent();
         File folder = new File(path);
@@ -138,6 +141,7 @@ public class Main {
         jasminClass.print(writerOut);
         writerOut.flush();
         streamOut.close();
+        System.exit(0);
     }
 
     private static void createNestedFolder(File folder) {
@@ -167,7 +171,7 @@ public class Main {
                 try {
                     String line2 = null ;
                     while ((line2 = br2.readLine()) !=  null ){
-                        System.out.println(line2);
+//                        System.out.println(line2);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -181,7 +185,6 @@ public class Main {
                     }
                 }
             }).start();
-
             BufferedReader br1 = new BufferedReader(new InputStreamReader(is1));
             try {
                 String line1 = null;
@@ -230,7 +233,7 @@ public class Main {
                 try {
                     String line2 = null ;
                     while ((line2 = br2.readLine()) !=  null ){
-                        System.out.println(line2);
+//                        System.out.println(line2);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -373,8 +376,8 @@ public class Main {
             streamOut.close();
             return fileName;
         } catch (Exception e) {
-//            e.printStackTrace();
-            System.out.println("should not");
+            e.printStackTrace();
+//            System.out.println("should not");
             return null;
         }
     }

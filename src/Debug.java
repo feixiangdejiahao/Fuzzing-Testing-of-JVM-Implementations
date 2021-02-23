@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class Debug {
     static HashMap<MutateClass, List<String>> classPureInstructionFlowMap = new HashMap<>();
@@ -25,5 +26,15 @@ public class Debug {
         }else{
             classPureInstructionFlowMap.put(m, classPureInstructionFlow);
         }
+    }
+
+    public static boolean equals(Set<?> set1, Set<?> set2){
+        if(set1 == null || set2 ==null){//null就直接不比了
+            return false;
+        }
+        if(set1.size()!=set2.size()){//大小不同也不用比了
+            return false;
+        }
+        return set1.containsAll(set2);//最后比containsAll
     }
 }

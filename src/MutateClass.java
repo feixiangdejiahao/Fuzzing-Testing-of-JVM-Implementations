@@ -1,6 +1,6 @@
 import soot.*;
 import soot.jimple.*;
-import soot.jimple.internal.JGotoStmt;
+import soot.jimple.internal.JIfStmt;
 import soot.jimple.internal.JLookupSwitchStmt;
 import soot.jimple.internal.JReturnStmt;
 import soot.options.Options;
@@ -34,7 +34,7 @@ public class MutateClass {
     private static boolean noBegin = false;
 
     public void initialize(String className, String[] args, List<MethodCounter> previousMutationCounter, String jvmOptions)throws IOException{
-        //this.activeArgs = args;
+        this.activeArgs = args;
         MutateClass.jvmOptions = jvmOptions;
         this.className = className;
         this.sootClass = Main.loadTargetClass(className);//加载class并完成初始化
@@ -43,14 +43,12 @@ public class MutateClass {
 
     private void initializeSootClass(List<MethodCounter> previousMutationCounter) throws IOException{
         Set<String> classPureInstructionFlowSet= new HashSet<>();
-
-
         Main.outputClassFile(this.sootClass);//生成插装后的class文件
         for (SootMethod method : this.sootClass.getMethods()) {//将method村放入hashmap中,由signature进行索引
             this.methodLiveBody.put(method.getSignature(), method.retrieveActiveBody());
         }
         this.classPureInstructionFlow = Main.getPureInstructionsFlow(className, activeArgs, jvmOptions);//获取带signature的instruction
-        System.out.println(this.classPureInstructionFlow);
+//        System.out.println(this.classPureInstructionFlow);
         Debug.debug(this, classPureInstructionFlow);
         this.mainLiveStmt = Main.getExecutedLiveInstructions(className, Main.MAIN_SIGN, activeArgs, jvmOptions);//找main方法下的livecode
         for(String s: classPureInstructionFlow){
@@ -71,6 +69,7 @@ public class MutateClass {
             int callCount = previousMutationCounter == null ? 1 : previousMutationCounter.get(counter++).getCount();//统计方法被调用的次数
             mutationCounter.add(new MethodCounter(method.getSignature(), callCount));
         }
+//        System.out.println(methodLiveCode.size());
         transformStmtToString(methodOriginalStmtList, methodOriginalStmtStringList);
         transformStmtToStringAdvanced(methodLiveCode, methodLiveCodeString);
     }
@@ -97,7 +96,7 @@ public class MutateClass {
         }
     }
 
-    public static void transformStmtToStringAdvanced(Map<String, List<Stmt>> from, Map<String, List<String>> to) {
+    public static void transformStmtToStringAdvanced(Map<String, List<Stmt>> from, Map<String, List<String>> to) {//将stmt转为string
         for (String key: from.keySet()) {
             List<Stmt> current = from.get(key);
             List<String> currentString = new ArrayList<>();
@@ -108,7 +107,7 @@ public class MutateClass {
         }
     }
 
-    public void saveCurrentClass() {
+    public void saveCurrentClass() {//保存class记录
         String path = Main.temporaryOutput(sootClass, "./tmp", System.currentTimeMillis() + ".");
         this.setBackPath(path);
     }
@@ -123,6 +122,8 @@ public class MutateClass {
         if (index >= mutationCounter.size()) {
             index = mutationCounter.size() - 1;
         }
+//        System.out.println(this.mutationCounter.size());
+//        System.out.println(index);
         MethodCounter method = this.mutationCounter.get(index);
         method.setCount(method.getCount() + 1);
         sortByPotential();
@@ -274,6 +275,7 @@ public class MutateClass {
         result.initializeSootClass(mutationCounter);//更新sootclass数据到result下
         if (result.getClassPureInstructionFlow().size() == 0 || result.getMethodLiveCode(result.getCurrentMethod().getSignature()).size() == 0) {
             Main.temporaryOutput(result.getSootClass(), "./nolivecode/", System.currentTimeMillis() + ".");
+            System.out.println("nolivecode");
             return null;
         }
         return result;
@@ -291,7 +293,7 @@ public class MutateClass {
         return classPureInstructionFlow;
     }
 
-    private MethodCounter getCurrentMethod() {
+    public MethodCounter getCurrentMethod() {
         return currentMethod;
     }
 
@@ -434,7 +436,7 @@ public class MutateClass {
             if(stmtString.contains("return")){
                 // the return stmt can be "if i1 != 0 goto return 0"
                 if(stmtString.contains("goto")){
-                    JGotoStmt ifReturnStmt = (JGotoStmt)originStmt.get(i);
+                    JIfStmt ifReturnStmt = (JIfStmt)originStmt.get(i);
                     Stmt returnStmt = (Stmt)ifReturnStmt.getTargetBox().getUnit();
                     foundReturnStmt.add(returnStmt);
                 }else{
@@ -453,5 +455,17 @@ public class MutateClass {
                 return Jimple.v().newReturnStmt(NullConstant.v());//感觉这里可以进行修改或优化
             }
         }
+    }
+
+    public List<String> getMethodLiveCodeString(String signature) {
+        return this.methodLiveCodeString.get(signature);
+    }
+
+    public List<String> getMethodOriginalStmtListString(String signature) {
+        return methodOriginalStmtStringList.get(signature);
+    }
+
+    public String getBackPath() {
+        return backPath;
     }
 }
