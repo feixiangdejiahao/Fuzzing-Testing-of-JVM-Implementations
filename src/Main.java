@@ -141,7 +141,6 @@ public class Main {
         jasminClass.print(writerOut);
         writerOut.flush();
         streamOut.close();
-        System.exit(0);
     }
 
     private static void createNestedFolder(File folder) {
