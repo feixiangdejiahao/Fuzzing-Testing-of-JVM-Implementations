@@ -1,5 +1,6 @@
 import soot.*;
 import soot.jimple.*;
+import soot.jimple.internal.JGotoStmt;
 import soot.jimple.internal.JIfStmt;
 import soot.jimple.internal.JLookupSwitchStmt;
 import soot.jimple.internal.JReturnStmt;
@@ -48,7 +49,6 @@ public class MutateClass {
             this.methodLiveBody.put(method.getSignature(), method.retrieveActiveBody());
         }
         this.classPureInstructionFlow = Main.getPureInstructionsFlow(className, activeArgs, jvmOptions);//获取带signature的instruction
-//        System.out.println(this.classPureInstructionFlow);
         Debug.debug(this, classPureInstructionFlow);
         this.mainLiveStmt = Main.getExecutedLiveInstructions(className, Main.MAIN_SIGN, activeArgs, jvmOptions);//找main方法下的livecode
         for(String s: classPureInstructionFlow){
@@ -430,13 +430,14 @@ public class MutateClass {
     private Stmt getReturnStmt(String signature) {
         List<String> originStmtString = methodOriginalStmtStringList.get(signature);
         List<Stmt> originStmt = methodOriginalStmtList.get(signature);
+        System.out.println(originStmtString);
         List<Stmt> foundReturnStmt = new ArrayList<Stmt>();
         for (int i = 0; i < originStmtString.size(); i++){
             String stmtString = originStmtString.get(i);
             if(stmtString.contains("return")){
                 // the return stmt can be "if i1 != 0 goto return 0"
                 if(stmtString.contains("goto")){
-                    JIfStmt ifReturnStmt = (JIfStmt)originStmt.get(i);
+                    JGotoStmt ifReturnStmt = (JGotoStmt)originStmt.get(i);
                     Stmt returnStmt = (Stmt)ifReturnStmt.getTargetBox().getUnit();
                     foundReturnStmt.add(returnStmt);
                 }else{

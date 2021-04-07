@@ -160,6 +160,7 @@ public class Main {
                 cmd += " " + arg + " ";
             }
         }
+//        System.out.println(cmd);
         System.out.println("getPureInstructionsFlow: Start!");
         try {
             Process p = Runtime.getRuntime().exec(cmd);

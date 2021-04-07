@@ -11,7 +11,7 @@
          if (classPath != null && !classPath.isEmpty()) {
              Main.setGenerated(classPath);
          }
-         if (dependencies != null && dependencies.isEmpty()) {
+         if (dependencies != null && !dependencies.isEmpty()) {
              Main.setDependencies(dependencies);
          }
          MutateClass mutateClass = new MutateClass();
