@@ -469,4 +469,42 @@ public class MutateClass {
     public String getBackPath() {
         return backPath;
     }
+
+    public MutateClass JITIteration() {
+        MethodCounter current = this.getMethodToMutate();
+        this.setCurrentMethod(current);
+        this.saveCurrentClass(); // save current class
+        try {
+            this.JITMutation(current.getSignature()); // change current topology
+            return this.deepCopy(); // applied change to new class
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void JITMutation(String signature) {
+        System.out.println("one round start in JIT.================================================================================");
+        List<Stmt> liveCode = methodLiveCode.get(signature);
+        int hookingPoint = this.selectHookingPoint(signature, 2);
+        Stmt targetPoint = selectTargetPoints(signature);
+//        System.out.println(targetPoint);
+//        System.out.println(liveCode.get(hookingPoint));
+        Stmt nop = Jimple.v().newNopStmt();//这里nop放在hooking point处，作为循环的起点。
+        Body body = this.methodLiveBody.get(signature);
+        UnitPatchingChain units = body.getUnits();
+        Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
+        body.getLocals().add(newVar);
+        Value rightValue = IntConstant.v(loopLimit);// rightValue : 1
+        AssignStmt assign = Jimple.v().newAssignStmt(newVar, rightValue);// assign : newVar = rightValue
+        SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
+        ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
+        AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
+        IfStmt ifGoto = Jimple.v().newIfStmt(cond, nop);//ifGoto : if (cond) nop;
+        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 1 放在最前面
+        units.insertBeforeNoRedirect(nop, getTargetStmt(units, liveCode.get(hookingPoint)));//将nop放在hooking point前，也就是待跳转位置
+        Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, targetPoint));//循环判断条件放在target point后面，当减一后仍满足>=0条件时，返回hooking point接着进行循环
+        units.insertAfter(ifGoto, printStmt);
+        units.insertAfter(substmt, printStmt);
+    }
 }
