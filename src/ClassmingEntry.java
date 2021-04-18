@@ -81,7 +81,7 @@
 
      private static MutateClass randomMutation(MutateClass target) throws IOException {
          Random random = new Random();
-         int randomAction = random.nextInt(3);
+         int randomAction = random.nextInt(4);
          switch (randomAction) {
              case 0:
                  return target.gotoIteration();
@@ -89,8 +89,8 @@
                  return target.lookUpSwitchIteration();
              case 2:
                  return target.returnIteration();
-//             case 3:
-//                 return target.JITIteration();
+             case 3:
+                 return target.JITIteration();
          }
          return null;
      }
@@ -98,20 +98,21 @@
      public static void main (String[]args) throws IOException {
          long startTime = System.currentTimeMillis();
          String home_path = "/Users/feixiangdejiahao/jvm-fuzzing/";
-//         process("org.sunflow.Benchmark", 1,
-//                 new String[]{"-bench", "2", "256"},// "  -bench [threads] [resolution] Run a single iteration of the benchmark using the specified thread count and image resolution"
-//                 "./sootOutput/sunflow-0.07.2/",
-//                 "dependencies/janino-2.5.15.jar", "");
-         process("org.python.util.jython", 500,
-                 new String[]{"sootOutput/jython/hello.py"},
-                 "./sootOutput/jython/",
-                 "dependencies/guava-r07.jar:"+
-                         "dependencies/constantine.jar:" +
-                         "dependencies/jnr-posix.jar:" +
-                         "dependencies/jaffl.jar:" +
-                         "dependencies/jline-0.9.95-SNAPSHOT.jar:" +
-                         "dependencies/antlr-3.1.3.jar:" +
-                         "dependencies/asm-3.1.jar", "");
+         process("org.sunflow.Benchmark", 1,
+                 new String[]{"-bench", "2", "256"},// "  -bench [threads] [resolution] Run a single iteration of the benchmark using the specified thread count and image resolution"
+                 "./sootOutput/sunflow-0.07.2/",
+                 "dependencies/janino-2.5.15.jar", "");
+//         process("org.python.util.jython", 500,
+//                 new String[]{"sootOutput/jython/hello.py"},
+//                 "./sootOutput/jython/",
+//                 "dependencies/guava-r07.jar:"+
+//                         "dependencies/constantine.jar:" +
+//                         "dependencies/jnr-posix.jar:" +
+//                         "dependencies/jaffl.jar:" +
+//                         "dependencies/jline-0.9.95-SNAPSHOT.jar:" +
+//                         "dependencies/antlr-3.1.3.jar:" +
+//                         "dependencies/asm-3.1.jar", "");
+//         process("Test",1,new String[]{},"./src","","");
          long endTime = System.currentTimeMillis();
          System.out.println("Program used time: " + (endTime - startTime) + "ms");//输出运行时间
      }

@@ -32,6 +32,7 @@ public class MutateClass {
 
     private static int gotoVarCount = 1;
     private static int loopLimit = 5;
+    private static int jitLimit = 100000;
     private static boolean noBegin = false;
 
     public void initialize(String className, String[] args, List<MethodCounter> previousMutationCounter, String jvmOptions)throws IOException{
@@ -44,11 +45,12 @@ public class MutateClass {
 
     private void initializeSootClass(List<MethodCounter> previousMutationCounter) throws IOException{
         Set<String> classPureInstructionFlowSet= new HashSet<>();
-        Main.outputClassFile(this.sootClass);//生成插装后的class文件
+        Main.outputClassFile(this.sootClass);//生成插装后的class文件,替换原始/上一版本的class文件
         for (SootMethod method : this.sootClass.getMethods()) {//将method村放入hashmap中,由signature进行索引
             this.methodLiveBody.put(method.getSignature(), method.retrieveActiveBody());
         }
         this.classPureInstructionFlow = Main.getPureInstructionsFlow(className, activeArgs, jvmOptions);//获取带signature的instruction
+//        System.out.println(this.classPureInstructionFlow);
         Debug.debug(this, classPureInstructionFlow);
         this.mainLiveStmt = Main.getExecutedLiveInstructions(className, Main.MAIN_SIGN, activeArgs, jvmOptions);//找main方法下的livecode
         for(String s: classPureInstructionFlow){
@@ -490,19 +492,19 @@ public class MutateClass {
         Stmt targetPoint = selectTargetPoints(signature);
 //        System.out.println(targetPoint);
 //        System.out.println(liveCode.get(hookingPoint));
-        Stmt nop = Jimple.v().newNopStmt();//这里nop放在hooking point处，作为循环的起点。
+//        Stmt nop = Jimple.v().newNopStmt();//这里nop放在hooking point处，作为循环的起点。
         Body body = this.methodLiveBody.get(signature);
         UnitPatchingChain units = body.getUnits();
         Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
         body.getLocals().add(newVar);
-        Value rightValue = IntConstant.v(loopLimit);// rightValue : 1
+        Value rightValue = IntConstant.v(jitLimit);// rightValue : 100000
         AssignStmt assign = Jimple.v().newAssignStmt(newVar, rightValue);// assign : newVar = rightValue
         SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
         ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
         AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
-        IfStmt ifGoto = Jimple.v().newIfStmt(cond, nop);//ifGoto : if (cond) nop;
-        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 1 放在最前面
-        units.insertBeforeNoRedirect(nop, getTargetStmt(units, liveCode.get(hookingPoint)));//将nop放在hooking point前，也就是待跳转位置
+        IfStmt ifGoto = Jimple.v().newIfStmt(cond, liveCode.get(hookingPoint));//ifGoto : if (cond), hooking point;
+        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 100000 放在最前面
+//        units.insertBeforeNoRedirect(nop, getTargetStmt(units, liveCode.get(hookingPoint)));//将nop放在hooking point前，也就是待跳转位置
         Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, targetPoint));//循环判断条件放在target point后面，当减一后仍满足>=0条件时，返回hooking point接着进行循环
         units.insertAfter(ifGoto, printStmt);
         units.insertAfter(substmt, printStmt);
