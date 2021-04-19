@@ -5,32 +5,31 @@ import java.io.OutputStream;
 
 public class Test{
     public static void main(String[] args) throws IOException {
-        int i = 1;
-        Person camel = new Person("jiahaoxiang");
-        camel.setName("jiahaoxiang");
-        OutputStream file = new FileOutputStream("./tmp/1612946172994.org.sunflow.Benchmark.class ");
-        System.out.println(camel.getName());
-        file.close();
-        //System.out.println(System.getProperty("java.class.path"));
-    }
+        int i = 10;
+        do{
 
-}
-
-class Person {
-    private String name;
-    static int id = 1;
-
-    public Person(){
-
-    }
-    public Person(String name){
-
-        this.name = name;
-    }
-    public void setName(String name){
-        this.name = name;
-    }
-    public String getName(){
-        return this.name;
+            System.out.println("test");
+            i--;
+        }while(i > 0);
+        System.out.println("end");
     }
 }
+
+//class Person {
+//    private String name;
+//    static int id = 1;
+//
+//    public Person(){
+//
+//    }
+//    public Person(String name){
+//
+//        this.name = name;
+//    }
+//    public void setName(String name){
+//        this.name = name;
+//    }
+//    public String getName(){
+//        return this.name;
+//    }
+//}
