@@ -446,7 +446,7 @@ public class MutateClass {
     private Stmt getReturnStmt(String signature) {
         List<String> originStmtString = methodOriginalStmtStringList.get(signature);
         List<Stmt> originStmt = methodOriginalStmtList.get(signature);
-        System.out.println(originStmtString);
+//        System.out.println(originStmtString);
         List<Stmt> foundReturnStmt = new ArrayList<Stmt>();
         for (int i = 0; i < originStmtString.size(); i++){
             String stmtString = originStmtString.get(i);
