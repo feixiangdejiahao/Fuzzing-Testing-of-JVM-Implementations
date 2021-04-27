@@ -187,23 +187,10 @@ public class MutateClass {
         }
     }
 
-    public Stmt selectTargetPoints(String signature,int hookingpoint,int flag) {//flag用于标记gotoiteration(flag = 1)、jititeration(flag = 2)还是其他(flag = 0)
+    public Stmt selectTargetPoints(String signature) {
         Random random = new Random();
-//        System.out.println("hooking point:"+hookingpoint);
         while (true) {
-            int tpIndex;
-            if (flag==1){
-                tpIndex = random.nextInt(this.methodOriginalStmtList.get(signature).size()- hookingpoint) + hookingpoint;
-//                System.out.println("target point:" + tpIndex);
-                //确保target位置在hooking下方，这样可以实现goto跳转效果
-            }
-            else if (flag==2){
-                tpIndex = random.nextInt(hookingpoint);
-               //确保target位置在hooking上方，这样可以实现do...while循环效果
-            }
-            else{
-                tpIndex = random.nextInt(this.methodOriginalStmtList.get(signature).size());
-            }
+            int tpIndex = random.nextInt(this.methodOriginalStmtList.get(signature).size() - 1) + 1;
             double rand = random.nextDouble();
             Stmt nextStmt = this.methodOriginalStmtList.get(signature).get(tpIndex);
             if (shouldRandom) {
@@ -247,26 +234,25 @@ public class MutateClass {
         System.out.println("one round start in goto.================================================================================");
         List<Stmt> liveCode = methodLiveCode.get(signature);
         int hookingPoint = this.selectHookingPoint(signature, 2);
-        Stmt targetPoint = selectTargetPoints(signature, hookingPoint,1);
+        Stmt targetPoint = selectTargetPoints(signature);
 //        System.out.println(targetPoint);
 //        System.out.println(liveCode.get(hookingPoint));
         Stmt nop = Jimple.v().newNopStmt();
         Body body = this.methodLiveBody.get(signature);
         UnitPatchingChain units = body.getUnits();
-//        Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
-//        body.getLocals().add(newVar);
-//        Value rightValue = IntConstant.v(loopLimit);// rightValue : 5
-//        AssignStmt assign = Jimple.v().newAssignStmt(newVar, rightValue);// assign : newVar = rightValue
-//        SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
-//        ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
-//        AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
-//        IfStmt ifGoto = Jimple.v().newIfStmt(cond, nop);//ifGoto : if (cond) nop;
-//        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 1 放在最前面
+        Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
+        body.getLocals().add(newVar);
+        Value rightValue = IntConstant.v(loopLimit);// rightValue : 1
+        AssignStmt assign = Jimple.v().newAssignStmt(newVar, rightValue);// assign : newVar = rightValue
+        SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
+        ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
+        AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
+        IfStmt ifGoto = Jimple.v().newIfStmt(cond, nop);//ifGoto : if (cond) nop;
+        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 1 放在最前面
         units.insertBeforeNoRedirect(nop, getTargetStmt(units, targetPoint));//将nop放在targetpoint前，也就是待跳转位置
-//        Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, liveCode.get(hookingPoint)));
-//        units.insertAfter(ifGoto, printStmt);
-//        units.insertAfter(substmt, printStmt);
-        GotoStmt gotonop = Jimple.v().newGotoStmt(nop);
+        Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, liveCode.get(hookingPoint)));
+        units.insertAfter(ifGoto, printStmt);
+        units.insertAfter(substmt, printStmt);
     }
 
     private Stmt getTargetStmt(UnitPatchingChain units, Stmt target){
@@ -359,13 +345,13 @@ public class MutateClass {
         int gotoVarCountCopy = loopLimit;
         for (int i =0; i<caseNum;i++){
             lookUpValues.add(IntConstant.v(--gotoVarCountCopy));
-            Stmt tempTargetPoint = selectTargetPoints(signature,hookingPoint,0);
+            Stmt tempTargetPoint = selectTargetPoints(signature);
             int selectTimes = 0;
             while(selectedTargetPoints.contains(tempTargetPoint)){  // make sure target is different
                 if (selectTimes>=5){
                     break;
                 }
-                tempTargetPoint = selectTargetPoints(signature,hookingPoint,0);
+                tempTargetPoint = selectTargetPoints(signature);
                 selectTimes++;
             }
             selectedTargetPoints.add(tempTargetPoint);
@@ -373,13 +359,13 @@ public class MutateClass {
             units.insertBeforeNoRedirect(nop, getTargetStmt(units, tempTargetPoint));
             labels.add(nop);
         }
-        Stmt defaultTargetPoint = selectTargetPoints(signature,hookingPoint,0);//放置default语句
+        Stmt defaultTargetPoint = selectTargetPoints(signature);//放置default语句
         int selectTimes = 0;
         while(selectedTargetPoints.contains(defaultTargetPoint)){
             if (selectTimes>=5){
                 break;
             }
-            defaultTargetPoint = selectTargetPoints(signature,hookingPoint,0);
+            defaultTargetPoint = selectTargetPoints(signature);
             selectTimes++;
         }
         Stmt defaultNop = Jimple.v().newNopStmt();
@@ -503,10 +489,7 @@ public class MutateClass {
         System.out.println("one round start in JIT.================================================================================");
         List<Stmt> liveCode = methodLiveCode.get(signature);
         int hookingPoint = this.selectHookingPoint(signature, 2);
-        Stmt targetPoint = selectTargetPoints(signature,hookingPoint,2);
-//        System.out.println(targetPoint);
-//        System.out.println(liveCode.get(hookingPoint));
-//        Stmt nop = Jimple.v().newNopStmt();//这里nop放在hooking point处，作为循环的起点。
+//        Stmt targetPoint = selectTargetPoints(signature);
         Body body = this.methodLiveBody.get(signature);
         UnitPatchingChain units = body.getUnits();
         Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
@@ -516,10 +499,10 @@ public class MutateClass {
         SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
         ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
         AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
-        IfStmt ifGoto = Jimple.v().newIfStmt(cond, liveCode.get(hookingPoint));//ifGoto : if (cond), hooking point;
+        IfStmt ifGoto = Jimple.v().newIfStmt(cond, liveCode.get(1));//ifGoto : if (cond), 跳转到第一条语句，增加JIT出错的概率。
         units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 100000 放在最前面
 //        units.insertBeforeNoRedirect(nop, getTargetStmt(units, liveCode.get(hookingPoint)));//将nop放在hooking point前，也就是待跳转位置
-        Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, targetPoint));//循环判断条件放在target point后面，当减一后仍满足>=0条件时，返回hooking point接着进行循环
+        Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, liveCode.get(hookingPoint)));//循环判断条件放在hooking point后面，当减一后仍满足>=0条件时，返回最上方接着进行循环
         units.insertAfter(ifGoto, printStmt);
         units.insertAfter(substmt, printStmt);
     }
