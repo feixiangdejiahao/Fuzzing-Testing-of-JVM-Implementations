@@ -69,11 +69,22 @@ public class MutateClass {
             UsedStatementHelper.addClassMethodUsedStmt(className, method.getSignature(), usedStmt);
             methodLiveCode.put(method.getSignature(), liveStmt);
             int callCount = previousMutationCounter == null ? 1 : previousMutationCounter.get(counter++).getCount();//统计方法被调用的次数
-            mutationCounter.add(new MethodCounter(method.getSignature(), callCount));
+            int instructionCount = instructionCounter(Main.getAllStatementsList(method));//用于记录每个method中goto，return，switch等改变控制流语句的数量
+            mutationCounter.add(new MethodCounter(method.getSignature(), callCount, instructionCount));
         }
 //        System.out.println(methodLiveCode.size());
         transformStmtToString(methodOriginalStmtList, methodOriginalStmtStringList);
         transformStmtToStringAdvanced(methodLiveCode, methodLiveCodeString);
+    }
+
+    private int instructionCounter(List<Stmt> allStatementsList) {//用于记录每个method中goto，return，switch等改变控制流语句的数量
+        int count = 0;
+        for (Stmt stmt : allStatementsList) {
+            if (stmt.toString().contains("goto") | stmt.toString().contains("return") | stmt.toString().contains("switch")){
+                count++;
+            }
+        }
+        return count;
     }
 
     private Set<String> changeListToSet(List<Stmt> target) {
@@ -132,8 +143,8 @@ public class MutateClass {
         return method;
     }
 
-    public void sortByPotential() {//对方法进行排序，排序方法：(方法的size)/(方法被调用的次数)
-        this.mutationCounter.sort((o1, o2) -> methodLiveCode.get(o2.getSignature()).size() / o2.getCount() - methodLiveCode.get(o1.getSignature()).size() / o1.getCount());
+    public void sortByPotential() {//对方法进行排序，排序方法：(方法的size)/(方法被调用的次数) --> (size*0.7 + instructions*0.3)/usedtime
+        this.mutationCounter.sort((o1, o2) -> ( methodLiveCode.get(o2.getSignature()).size()*7 + o2.getInstructionCount()*3 ) / o2.getCount() * 10 - (methodLiveCode.get(o1.getSignature()).size()*7 + o1.getInstructionCount()*3) / o1.getCount() * 10);
     }
 
     public int selectHookingPoint(String signature, int candidates) {
@@ -242,14 +253,14 @@ public class MutateClass {
         UnitPatchingChain units = body.getUnits();
         Local newVar = Jimple.v().newLocal("_M" + (gotoVarCount++), IntType.v());//给新局部变量newVar设定名称为"_M"+gotoVarCount，类型为int
         body.getLocals().add(newVar);
-        Value rightValue = IntConstant.v(loopLimit);// rightValue : 1
+        Value rightValue = IntConstant.v(loopLimit);// rightValue : 5
         AssignStmt assign = Jimple.v().newAssignStmt(newVar, rightValue);// assign : newVar = rightValue
         SubExpr sub = Jimple.v().newSubExpr(newVar, IntConstant.v(1));//sub : newVar - 1
         ConditionExpr cond = Jimple.v().newGeExpr(newVar, IntConstant.v(0));//cond : newVar >= 0
         AssignStmt substmt = Jimple.v().newAssignStmt(newVar, sub);//substmt : newVar = sub
-        IfStmt ifGoto = Jimple.v().newIfStmt(cond, nop);//ifGoto : if (cond) nop;
-        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 1 放在最前面
-        units.insertBeforeNoRedirect(nop, getTargetStmt(units, targetPoint));//将nop放在targetpoint前，也就是待跳转位置
+        IfStmt ifGoto = Jimple.v().newIfStmt(cond, targetPoint);//ifGoto : if (cond) target point;
+        units.insertBefore(assign, getTargetStmt(units, liveCode.get(0)));// 将 newVar = 5 放在最前面
+//        units.insertBeforeNoRedirect(nop, getTargetStmt(units, targetPoint));//将nop放在targetpoint前，也就是待跳转位置
         Stmt printStmt = (Stmt)units.getSuccOf(getTargetStmt(units, liveCode.get(hookingPoint)));
         units.insertAfter(ifGoto, printStmt);
         units.insertAfter(substmt, printStmt);

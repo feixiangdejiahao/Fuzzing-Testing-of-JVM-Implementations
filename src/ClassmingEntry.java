@@ -6,6 +6,7 @@
  import java.util.Random;
 
  public class ClassmingEntry {
+     public static String cpSeparator = ":";
      public static void process(String className, int iterationCount, String[] args, String classPath, String dependencies, String jvmOptions) throws IOException {
          MutateClass base  = new MutateClass();//用于保存最后一个成功接收的mutateClass
          if (classPath != null && !classPath.isEmpty()) {
@@ -81,16 +82,16 @@
 
      private static MutateClass randomMutation(MutateClass target) throws IOException {
          Random random = new Random();
-         int randomAction = random.nextInt(4);
+         int randomAction = random.nextInt(1);
          switch (randomAction) {
              case 0:
                  return target.gotoIteration();
-             case 1:
-                 return target.lookUpSwitchIteration();
-             case 2:
-                 return target.returnIteration();
-             case 3:
-                 return target.JITIteration();
+//             case 1:
+//                 return target.lookUpSwitchIteration();
+//             case 2:
+//                 return target.returnIteration();
+//             case 3:
+//                 return target.JITIteration();
          }
          return null;
      }
@@ -98,21 +99,41 @@
      public static void main (String[]args) throws IOException {
          long startTime = System.currentTimeMillis();
          String home_path = "/Users/feixiangdejiahao/jvm-fuzzing/";
-//         process("org.sunflow.Benchmark", 1,
-//                 new String[]{"-bench", "2", "256"},// "  -bench [threads] [resolution] Run a single iteration of the benchmark using the specified thread count and image resolution"
-//                 "./sootOutput/sunflow-0.07.2/",
-//                 "dependencies/janino-2.5.15.jar", "");
-         process("org.python.util.jython", 10,
+         process("avrora.Main", 3000,
+                 new String[]{"-action=cfg","sootOutput/avrora-cvs-20091224/example.asm"},
+                 "./sootOutput/avrora-cvs-20091224/",null, "");
+        process("org.apache.batik.apps.rasterizer.Main", 400,null,
+                "./sootOutput/batik-all/",null, "");
+         process("org.eclipse.core.runtime.adaptor.EclipseStarter", 3,
+                 new String[]{"-debug"}, "./sootOutput/eclipse/", null, "");
+         process("org.sunflow.Benchmark", 5,
+                 new String[]{"-bench","2","256"},
+                 "./sootOutput/sunflow-0.07.2/",
+                 "dependencies/janino-2.5.15.jar", "");
+         process("org.apache.fop.cli.Main", 3000,
+                 new String[]{"-xml","sootOutput/fop/name.xml","-xsl","sootOutput/fop/name2fo.xsl","-pdf","sootOutput/fop/name.pdf"},
+                 "./sootOutput/fop/",
+                 "dependencies/xmlgraphics-commons-1.3.1.jar" + cpSeparator +
+                         "dependencies/commons-logging.jar" + cpSeparator +
+                         "dependencies/avalon-framework-4.2.0.jar" + cpSeparator +
+                         "dependencies/batik-all.jar" + cpSeparator +
+                         "dependencies/commons-io-1.3.1.jar", "");
+         process("org.python.util.jython", 6000,
                  new String[]{"sootOutput/jython/hello.py"},
                  "./sootOutput/jython/",
-                 "dependencies/guava-r07.jar:"+
-                         "dependencies/constantine.jar:" +
-                         "dependencies/jnr-posix.jar:" +
-                         "dependencies/jaffl.jar:" +
-                         "dependencies/jline-0.9.95-SNAPSHOT.jar:" +
-                         "dependencies/antlr-3.1.3.jar:" +
+                 "dependencies/guava-r07.jar" + cpSeparator +
+                         "dependencies/constantine.jar" + cpSeparator +
+                         "dependencies/jnr-posix.jar" + cpSeparator +
+                         "dependencies/jaffl.jar" + cpSeparator +
+                         "dependencies/jline-0.9.95-SNAPSHOT.jar" + cpSeparator +
+                         "dependencies/antlr-3.1.3.jar" + cpSeparator +
                          "dependencies/asm-3.1.jar", "");
-//         process("Test",1,new String[]{},"./sootOutput/test/","","");
+        process("net.sourceforge.pmd.PMD", 3,
+                new String[]{"sootOutput/pmd-4.2.5/Hello.java","text","unusedcode"},
+                "./sootOutput/pmd-4.2.5/",
+                "dependencies/jaxen-1.1.1.jar" + cpSeparator +
+                        "dependencies/asm-3.1.jar", "");
+//         process("Test",5,new String[]{},"./sootOutput/test/","","");
          long endTime = System.currentTimeMillis();
          System.out.println("Program used time: " + (endTime - startTime) + "ms");//输出运行时间
      }

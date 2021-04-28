@@ -1,10 +1,12 @@
 public class MethodCounter implements Comparable {//用于进行方法排序
     private String signature;
     private Integer count;
+    private Integer instructionCount;
 
-    public MethodCounter(String signature, int count) {
+    public MethodCounter(String signature, int count, int instructionCount) {
         this.signature = signature;
         this.count = count;
+        this.instructionCount = instructionCount;
     }
 
     public String getSignature() {
@@ -21,6 +23,10 @@ public class MethodCounter implements Comparable {//用于进行方法排序
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public int getInstructionCount() {
+        return instructionCount;
     }
 
     @Override
