@@ -154,7 +154,8 @@ public class Main {
         Set<String> usedStmt = new HashSet<>();
         List<String> result = new ArrayList<>();
         String cmd;
-        cmd = "java -Xbootclasspath/a:" + dependencies + " -classpath " + generated + extraCp + " " + jvmOptions + " " + className;
+        cmd = "java -Xbootclasspath/a:" + dependencies + " -classpath " + generated + extraCp + " " + jvmOptions + " -noverify " + className;
+//        System.out.println(cmd);
         if (activeArgs != null && activeArgs.length != 0) {
             for (String arg: activeArgs) {
                 cmd += " " + arg + " ";
@@ -217,7 +218,7 @@ public class Main {
     public static Set<String> getExecutedLiveInstructions(String className, String signature, String[] args, String jvmOptions) {//通过signature索引，获取某个method的livecode
         Set<String> usedStmt = new HashSet<>();
         String cmd;
-        cmd = "java -Xbootclasspath/a:" + dependencies + " -classpath " + generated + extraCp + " " + jvmOptions + " " + className;
+        cmd = "java -Xbootclasspath/a:" + dependencies + " -classpath " + generated + extraCp + " " + jvmOptions + " -noverify " + className;
         if (args != null && args.length != 0) {
             for (String arg: args) {
                 cmd += " " + arg + " ";

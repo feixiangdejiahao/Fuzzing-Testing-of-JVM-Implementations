@@ -27,7 +27,7 @@ public class MutateClass {
     private Map<String, List<String>> methodLiveCodeString = new HashMap<>();//将methodLiveCode中live stmt转为string存放
     private String backPath;
     private MethodCounter currentMethod;
-    private static boolean shouldRandom = false;
+    private static boolean shouldRandom = true;
 
 
     private static int gotoVarCount = 1;
@@ -151,9 +151,9 @@ public class MutateClass {
         int resultIndex = 0;
         List<Stmt> targetLiveCode = this.methodLiveCode.get(signature);
         Random rand = new Random();
-        if (shouldRandom) {
-            return rand.nextInt(targetLiveCode.size());
-        }
+//        if (shouldRandom) {
+//            return rand.nextInt(targetLiveCode.size());
+//        }
         int[] candidatesIndex = new int[candidates];
         for (int i = 0; i < candidatesIndex.length; i++) {
             candidatesIndex[i] = rand.nextInt(targetLiveCode.size());

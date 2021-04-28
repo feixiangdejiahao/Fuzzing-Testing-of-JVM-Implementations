@@ -25,7 +25,7 @@
          base = mutateClass;
          mutateClass.saveCurrentClass();
          for (int i = 0; i < iterationCount; i++) {
-             System.out.println("Current size is : " + (mutateAcceptHistory.size() + mutateRejectHistory.size()) + ", iteration is :" + i);
+             System.out.println("Current size is : " + (mutateAcceptHistory.size() +  mutateRejectHistory.size()) + ", iteration is :" + i);
              mutateClass = base;
              MutateClass newOne = randomMutation(mutateClass);//对mutateClass进行突变，对于nolivecode放在了deepcopy中。也就是在mutate之后直接进行判断，如果其livecode为0，则覆盖率也是为0的。
              if (newOne != null) {
@@ -47,7 +47,6 @@
                      newOne.saveCurrentClass();
                      mutateRejectHistory.add(newOne);
                      dumpSingleMutateClass(newOne, "./RejectHistory/");
-//                     mutateClass = Recover.recoverFromPath(mutateAcceptHistory.get(mutateAcceptHistory.size() - 1));
                  }
              }
          }
@@ -82,16 +81,16 @@
 
      private static MutateClass randomMutation(MutateClass target) throws IOException {
          Random random = new Random();
-         int randomAction = random.nextInt(1);
+         int randomAction = random.nextInt(4);
          switch (randomAction) {
              case 0:
                  return target.gotoIteration();
-//             case 1:
-//                 return target.lookUpSwitchIteration();
-//             case 2:
-//                 return target.returnIteration();
-//             case 3:
-//                 return target.JITIteration();
+             case 1:
+                 return target.lookUpSwitchIteration();
+             case 2:
+                 return target.returnIteration();
+             case 3:
+                 return target.JITIteration();
          }
          return null;
      }
@@ -128,12 +127,12 @@
                          "dependencies/jline-0.9.95-SNAPSHOT.jar" + cpSeparator +
                          "dependencies/antlr-3.1.3.jar" + cpSeparator +
                          "dependencies/asm-3.1.jar", "");
-        process("net.sourceforge.pmd.PMD", 3,
+        process("net.sourceforge.pmd.PMD", 50,
                 new String[]{"sootOutput/pmd-4.2.5/Hello.java","text","unusedcode"},
                 "./sootOutput/pmd-4.2.5/",
                 "dependencies/jaxen-1.1.1.jar" + cpSeparator +
                         "dependencies/asm-3.1.jar", "");
-//         process("Test",5,new String[]{},"./sootOutput/test/","","");
+         process("Test",5,new String[]{},"./sootOutput/test/","","");
          long endTime = System.currentTimeMillis();
          System.out.println("Program used time: " + (endTime - startTime) + "ms");//输出运行时间
      }
